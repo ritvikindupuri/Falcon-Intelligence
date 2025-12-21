@@ -1,4 +1,4 @@
-# AETHER: AI Security Automation
+# AETHER: COGNITIVE DEFENSE CORE
 ### Next-Gen Agentic Security Orchestration & Autonomous Forensics
 
 AETHER is an elite agentic AI platform designed to sit atop the CrowdStrike Falcon infrastructure. It acts as a "Cognitive Layer," transforming raw security telemetry into high-fidelity forensic intelligence and autonomous response actions.
@@ -29,11 +29,28 @@ Aether comes pre-loaded with specialized "Neural Playbooks" that target specific
 *   Lateral Movement Sweep: Correlates incidents to identify shared credentials across your fleet.
 *   Ransomware Audit: Scans for Shadow Copy deletion and mass encryption signatures.
 
-### 4. Autonomous Response & Containment
-Aether is authorized to execute Kernel-Level Host Isolation. If the AI confirms a high-confidence threat (e.g., active data exfiltration or credential dumping), it can trigger contain_host via the API to stop the adversary in milliseconds.
+---
 
-### 5. MITRE ATT&CK Mapping
-Every analysis produced by the core is automatically cross-referenced with the MITRE ATT&CK Framework, providing Tier-3 analysts with immediate TTP (Tactics, Techniques, and Procedures) identification.
+## TECH STACK
+
+### Neural Infrastructure
+- Model: Google Gemini 3 Pro (Preview)
+- Reasoning Engine: 32k Token Thinking Budget configuration
+- SDK: @google/genai
+
+### Intelligence Pipeline
+- API: CrowdStrike Falcon REST API (OAuth2)
+- Scopes: Alerts, Detections, Hosts, Incidents
+
+### Frontend Core
+- Framework: React (ESM modules)
+- Styling: Tailwind CSS (Custom Dark-Ops UI)
+- Language: TypeScript
+- Components: React Markdown for high-fidelity forensic reporting
+
+### Core Utilities
+- Authentication: Secure OAuth2 flow for CrowdStrike Cloud
+- State Management: React Hooks (useRef/useEffect/useState) for real-time telemetry updates
 
 ---
 
