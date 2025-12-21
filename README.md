@@ -1,97 +1,80 @@
 # AETHER: COGNITIVE DEFENSE CORE
+### Next-Gen Agentic Security Orchestration & Autonomous Forensics
 
-Aether is an elite agentic AI platform designed to sit atop the CrowdStrike Falcon Sensor infrastructure, providing autonomous reasoning and high-fidelity forensic synthesis.
-
----
-
-## THE COGNITIVE ADVANTAGE: WHY AETHER?
-
-While the CrowdStrike Falcon Sensor provides industry-leading telemetry, Aether provides the **Cognitive Layer** required to navigate complex, modern attack vectors autonomously.
-
-### Observation vs. Reasoning
-- **Falcon Sensor (Sensory Input)**: Captures kernel-level telemetry, process logs, and network flows.
-- **Aether Core (Cognitive Processing)**: Analyzes the *intent* behind the telemetry. It autonomously builds process trees, identifies malicious patterns, and maps them to the MITRE ATT&CK framework in real-time.
-
-### Next-Generation Agentic Features
-1. **Autonomous Investigation**: In Active Monitoring mode, Aether does not wait for an analyst. When a high-severity alert triggers, the core proactively queries multiple APIs to build a comprehensive forensic timeline before the analyst even opens the dashboard.
-2. **Neural Correlation**: Aether correlates siloed data from Incidents, Detections, and Asset metadata to identify attack progression (Lateral Movement) across the entire fleet.
-3. **Conversational Orchestration**: Turn complex forensic questions into simple tactical commands. Aether handles the API orchestration, allowing Tier-3 analysts to focus on high-level strategy.
+AETHER is an elite agentic AI platform designed to sit atop the CrowdStrike Falcon infrastructure. It acts as a "Cognitive Layer," transforming raw security telemetry into high-fidelity forensic intelligence and autonomous response actions.
 
 ---
 
-## NEURAL LOAD INDEX (NLI)
+## WHAT IS AETHER?
+Modern Security Operations Centers (SOC) are drowning in data but starving for time. EDR tools like CrowdStrike provide world-class sensory input (logs, process trees, network flows), but an analyst still has to manually piece the puzzle together.
 
-The Neural Load Index (NLI) is a high-fidelity pressure metric calculated in real-time to represent the total threat weight impacting the environment.
-
-### Calculation Logic
-The NLI utilizes a weighted summation of active telemetry:
-`NLI = min(100, (Critical_Incidents * 20) + (Open_Incidents * 4))`
-
-*   **Critical Incidents (Weight: 20)**: Incidents with a severity code of 80+.
-*   **Open Incidents (Weight: 4)**: Total volume of "New" or "In Progress" incidents requiring triage.
-
-### Operational Thresholds
-*   **0% - 60% (Stable)**: Manageable threat landscape.
-*   **60% - 70% (Elevated)**: Triage volume is approaching neural capacity.
-*   **> 70% (Saturation)**: High-velocity campaign detected. Immediate escalation required.
+Aether changes the paradigm. By leveraging the Gemini 3 Pro Neural Core, Aether doesn't just show you alerts—it thinks through them. It autonomously queries the API, reconstructs attack timelines, and can execute containment protocols without human intervention.
 
 ---
 
-## SYSTEM ARCHITECTURE
+## KEY FEATURES
 
-Aether leverages Gemini 3 Pro to perform "Thinking-First" security orchestration.
+### 1. Autonomous Forensic Investigation
+When a high-severity alert triggers, Aether immediately initiates a "Thinking Loop." It uses the Falcon API to pull process command lines, host metadata, and related detections to build a comprehensive forensic report before an analyst even opens the ticket.
 
-```mermaid
-graph TD
-    User((Tier-3 Analyst)) -- "Tactical Commands" --> UI[Aether Dashboard]
-    UI -- "Analysis Prompt" --> Core[Gemini 3 Pro Neural Core]
-    Core -- "Forensic Reason (32k Tokens)" --> Thinking{Reasoning Loop}
-    Thinking -- "Tool Call" --> API_Handler[Falcon API Integration]
-    API_Handler -- "OAuth2 / REST" --> CS_Cloud[Falcon Cloud]
-    CS_Cloud -- "Containment / RTR" --> Sensor[Falcon Sensor]
-    Sensor -- "Process Telemetry" --> CS_Cloud
-    CS_Cloud -- "Incident Data" --> API_Handler
-    API_Handler -- "Structured Result" --> UI
-    UI -- "Forensic Intelligence" --> User
-```
+### 2. Neural Load Index (NLI)
+A real-time pressure metric calculated at the kernel level.
+*   Low NLI (<30%): Baseline operations; standard background noise.
+*   High NLI (>70%): Active campaign detected; the environment is under significant pressure.
+*   Calculation: NLI = min(100, (Critical_Incidents * 20) + (Open_Incidents * 4))
+
+### 3. Tactical Heuristics (Playbooks)
+Aether comes pre-loaded with specialized "Neural Playbooks" that target specific attack vectors:
+*   Root Cause Reconstruction: Rebuilds the entire process lineage from kernel events.
+*   Lateral Movement Sweep: Correlates incidents to identify shared credentials across your fleet.
+*   Ransomware Audit: Scans for Shadow Copy deletion and mass encryption signatures.
+
+### 4. Autonomous Response & Containment
+Aether is authorized to execute Kernel-Level Host Isolation. If the AI confirms a high-confidence threat (e.g., active data exfiltration or credential dumping), it can trigger contain_host via the API to stop the adversary in milliseconds.
+
+### 5. MITRE ATT&CK Mapping
+Every analysis produced by the core is automatically cross-referenced with the MITRE ATT&CK Framework, providing Tier-3 analysts with immediate TTP (Tactics, Techniques, and Procedures) identification.
+
+---
+
+## THE NEURAL CORE (How it Works)
+
+Aether utilizes Gemini 3 Pro with a specific 32k Token Thinking Budget. This allows the AI to "reason" through thousands of lines of JSON telemetry.
+
+1.  Ingestion: Receives raw JSON from CrowdStrike Falcon.
+2.  Reasoning: The model enters a "Thinking" state, identifying patterns like obfuscated PowerShell or abnormal WMI calls.
+3.  Action: If information is missing, the agent autonomously decides which Falcon API tool to call next.
+4.  Synthesis: Outputs a human-readable "Strategic Intelligence" report with actionable recommendations.
 
 ---
 
 ## INSTALLATION AND LOCAL SETUP
 
-### Step 1: Secure Required API Keys
+### Step 1: Prepare Environment (Prerequisites)
+1.  Node.js (v18.0+): Required to run the React engine.
+2.  Modern Browser: Chrome/Edge is required for Gemini API support.
 
-1.  **Google Gemini API Key**: 
-    - Obtain an API Key from the Google AI Studio.
-    - Note: This application requires access to the gemini-3-pro-preview model.
-2.  **CrowdStrike API Client**:
-    - Navigate to Support and Resources > API Clients and Keys in your Falcon Console.
-    - Create a new Client with the following Minimum Scopes:
-        - Alerts: Read
-        - Detections: Read
-        - Hosts: Read, Write
-        - Incidents: Read
+### Step 2: Local Initialization
+1.  Download: Clone or download this repository.
+2.  Install: Navigate to the folder and run:
+    ```bash
+    npm install
+    ```
 
-### Step 2: Environment Configuration
+### Step 3: Secure API Credentials
+*   Google Gemini API: Get a key from Google AI Studio (aistudio.google.com).
+*   CrowdStrike API: In your Falcon Console, create a Client with Read access to Alerts/Detections/Incidents/Hosts and Write access to Hosts (for containment).
 
-Expose your Gemini API key as an environment variable:
-
-```bash
-# macOS / Linux
-export API_KEY='your_gemini_api_key_here'
-
-# Windows (PowerShell)
-$env:API_KEY='your_gemini_api_key_here'
-```
-
-### Step 3: Launch and Connect
-
-1.  **Start Application**: Run the local dev server.
-2.  **Access Dashboard**: Open http://localhost:3000.
-3.  **Establish Core Link**:
-    - Select the Settings button in the bottom-left.
-    - Enter your Client ID, Client Secret, and Cloud Region.
-    - Click Connect to synchronize the Aether Core.
+### Step 4: Launch
+1.  Expose your Gemini key:
+    ```bash
+    export API_KEY='your_key_here'
+    ```
+2.  Run the app:
+    ```bash
+    npm run dev
+    ```
+3.  Navigate to http://localhost:3000 and use the Core Config button to link your CrowdStrike account.
 
 ---
 **AETHER: NEURAL DEFENSE. COGNITIVE SUPERIORITY.**
