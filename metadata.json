@@ -1,0 +1,5 @@
+{
+  "name": "Falcon Intelligence Core (FIC)",
+  "description": "State-of-the-art cognitive threat hunting and automated mitigation for CrowdStrike analysts.",
+  "requestFramePermissions": []
+}
