@@ -1,4 +1,4 @@
-# AETHER: COGNITIVE DEFENSE CORE
+# AETHER: AI Security Automation
 ### Next-Gen Agentic Security Orchestration & Autonomous Forensics
 
 AETHER is an elite agentic AI platform designed to sit atop the CrowdStrike Falcon infrastructure. It acts as a "Cognitive Layer," transforming raw security telemetry into high-fidelity forensic intelligence and autonomous response actions.
