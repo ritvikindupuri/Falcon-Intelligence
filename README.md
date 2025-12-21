@@ -1,85 +1,97 @@
-# AXON CORE // Neural Security Orchestration
+# AETHER: COGNITIVE DEFENSE CORE
 
-**AXON CORE** is a next-generation, agentic AI platform designed for elite SOC analysts. While the standard **CrowdStrike Falcon Sensor** platform is the industry-leading telemetry and enforcement engine, **AXON CORE** acts as the *Cognitive Layer* sitting on top of it. 
-
-By leveraging **Gemini 3 Pro’s** advanced reasoning, AXON transforms fragmented data into a unified "Neural Stream" of actionable intelligence.
+Aether is an elite agentic AI platform designed to sit atop the CrowdStrike Falcon Sensor infrastructure, providing autonomous reasoning and high-fidelity forensic synthesis.
 
 ---
 
-## 💎 The Value Proposition: Why AXON?
+## THE COGNITIVE ADVANTAGE: WHY AETHER?
 
-CrowdStrike analysts typically spend 40% of their time "swivel-chairing" between different modules (Detections, Spotlight, Incidents, etc.). AXON CORE eliminates this friction.
+While the CrowdStrike Falcon Sensor provides industry-leading telemetry, Aether provides the **Cognitive Layer** required to navigate complex, modern attack vectors autonomously.
 
-| Feature | CrowdStrike Falcon Console | AXON CORE (Agentic) |
-| :--- | :--- | :--- |
-| **Analysis Loop** | Manual correlation of events across tabs. | **Autonomous Synthesis**: Cross-references incidents and telemetry automatically. |
-| **Action Latency** | Menu-driven (Click → Action → Verify). | **Conversational**: "Isolate the source of the beaconing" executes in < 2s. |
-| **Response MTTR** | Dependent on analyst speed/experience. | **Augmented**: Gemini 3 Pro provides Tier 3 forensic summaries instantly. |
-| **Monitoring** | Reactive (Waiting for the alert to pop). | **Proactive**: "Neural Watch" loop investigates potential threats before you see them. |
+### Observation vs. Reasoning
+- **Falcon Sensor (Sensory Input)**: Captures kernel-level telemetry, process logs, and network flows.
+- **Aether Core (Cognitive Processing)**: Analyzes the *intent* behind the telemetry. It autonomously builds process trees, identifies malicious patterns, and maps them to the MITRE ATT&CK framework in real-time.
+
+### Next-Generation Agentic Features
+1. **Autonomous Investigation**: In Active Monitoring mode, Aether does not wait for an analyst. When a high-severity alert triggers, the core proactively queries multiple APIs to build a comprehensive forensic timeline before the analyst even opens the dashboard.
+2. **Neural Correlation**: Aether correlates siloed data from Incidents, Detections, and Asset metadata to identify attack progression (Lateral Movement) across the entire fleet.
+3. **Conversational Orchestration**: Turn complex forensic questions into simple tactical commands. Aether handles the API orchestration, allowing Tier-3 analysts to focus on high-level strategy.
 
 ---
 
-## 🏗 System Architecture
+## NEURAL LOAD INDEX (NLI)
 
-AXON CORE uses a distributed reasoning architecture to ensure high-fidelity forensics and secure enforcement.
+The Neural Load Index (NLI) is a high-fidelity pressure metric calculated in real-time to represent the total threat weight impacting the environment.
+
+### Calculation Logic
+The NLI utilizes a weighted summation of active telemetry:
+`NLI = min(100, (Critical_Incidents * 20) + (Open_Incidents * 4))`
+
+*   **Critical Incidents (Weight: 20)**: Incidents with a severity code of 80+.
+*   **Open Incidents (Weight: 4)**: Total volume of "New" or "In Progress" incidents requiring triage.
+
+### Operational Thresholds
+*   **0% - 60% (Stable)**: Manageable threat landscape.
+*   **60% - 70% (Elevated)**: Triage volume is approaching neural capacity.
+*   **> 70% (Saturation)**: High-velocity campaign detected. Immediate escalation required.
+
+---
+
+## SYSTEM ARCHITECTURE
+
+Aether leverages Gemini 3 Pro to perform "Thinking-First" security orchestration.
 
 ```mermaid
 graph TD
-    User((SOC Analyst)) -- "Natural Language Commands" --> UI[AXON React Dashboard]
-    UI -- "Prompt + Context" --> GeminiAgent[Gemini 3 Pro Agent]
-    GeminiAgent -- "Chain of Thought (32k Tokens)" --> Reasoning{Reasoning Engine}
-    Reasoning -- "Tool Call (JSON)" --> CS_Service[CrowdStrike API Service]
-    CS_Service -- "OAuth2 / REST" --> CS_Cloud[CrowdStrike Cloud]
-    CS_Cloud -- "RTR / Containment" --> Sensor[Falcon Sensor on Endpoint]
-    Sensor -- "Telemetry" --> CS_Cloud
-    CS_Cloud -- "Data" --> CS_Service
-    CS_Service -- "Structured Result" --> UI
-    UI -- "Forensic Narrative" --> User
+    User((Tier-3 Analyst)) -- "Tactical Commands" --> UI[Aether Dashboard]
+    UI -- "Analysis Prompt" --> Core[Gemini 3 Pro Neural Core]
+    Core -- "Forensic Reason (32k Tokens)" --> Thinking{Reasoning Loop}
+    Thinking -- "Tool Call" --> API_Handler[Falcon API Integration]
+    API_Handler -- "OAuth2 / REST" --> CS_Cloud[Falcon Cloud]
+    CS_Cloud -- "Containment / RTR" --> Sensor[Falcon Sensor]
+    Sensor -- "Process Telemetry" --> CS_Cloud
+    CS_Cloud -- "Incident Data" --> API_Handler
+    API_Handler -- "Structured Result" --> UI
+    UI -- "Forensic Intelligence" --> User
 ```
 
 ---
 
-## 🛠 Tech Stack
+## INSTALLATION AND LOCAL SETUP
 
-- **Reasoning Core**: `gemini-3-pro-preview` with a 32,768 token "Thinking Budget".
-- **Frontend**: React 19, Tailwind CSS, Lucide-inspired geometric design.
-- **Backend Integration**: CrowdStrike Falcon API (OAuth2 / Devices-Actions v2).
-- **Communication**: Agentic Function Calling via `@google/genai`.
+### Step 1: Secure Required API Keys
 
----
+1.  **Google Gemini API Key**: 
+    - Obtain an API Key from the Google AI Studio.
+    - Note: This application requires access to the gemini-3-pro-preview model.
+2.  **CrowdStrike API Client**:
+    - Navigate to Support and Resources > API Clients and Keys in your Falcon Console.
+    - Create a new Client with the following Minimum Scopes:
+        - Alerts: Read
+        - Detections: Read
+        - Hosts: Read, Write
+        - Incidents: Read
 
-## 🚀 Setup Guide
+### Step 2: Environment Configuration
 
-### 1. CrowdStrike API Configuration
-AXON requires a **Client ID** and **Client Secret** with the following **API Scopes**:
-- **Alerts**: Read
-- **Detections**: Read
-- **Hosts**: Read & Write (Write is required for Contain/Lift containment)
-- **Incidents**: Read
+Expose your Gemini API key as an environment variable:
 
-**Steps:**
-1. Log in to your CrowdStrike Falcon Console.
-2. Navigate to **Support and Resources** > **API Clients and Keys**.
-3. Create a new Client named "AXON_CORE".
-4. Select the scopes listed above.
-5. Copy the **Client ID**, **Secret**, and note your **Base URL** (e.g., `https://api.us-2.crowdstrike.com`).
+```bash
+# macOS / Linux
+export API_KEY='your_gemini_api_key_here'
 
-### 2. Google Gemini API Key
-This app requires a Google Gemini API Key. This is injected via `process.env.API_KEY`.
+# Windows (PowerShell)
+$env:API_KEY='your_gemini_api_key_here'
+```
 
-### 3. Application Launch
-1. Open AXON CORE.
-2. Click the **"Config"** button in the bottom left.
-3. Enter your CrowdStrike Client ID, Secret, and select your Cloud Environment.
-4. Click **"Connect"**. The indicator should turn green once synchronized.
+### Step 3: Launch and Connect
 
----
-
-## ⚡ Operational Playbooks
-
-- **Neural Watch**: Activate this in the sidebar to have the agent proactively scan for new Critical incidents every 15 seconds.
-- **Containment**: If a threat is confirmed, AXON will provide an "Axon Contain" button. This triggers kernel-level network isolation.
-- **Restoration**: Once the asset is cleared, use the **"Lift Network Containment"** button within the chat stream to restore connectivity instantly.
+1.  **Start Application**: Run the local dev server.
+2.  **Access Dashboard**: Open http://localhost:3000.
+3.  **Establish Core Link**:
+    - Select the Settings button in the bottom-left.
+    - Enter your Client ID, Client Secret, and Cloud Region.
+    - Click Connect to synchronize the Aether Core.
 
 ---
-*AXON CORE: Neural Defense. Strategic Dominance.*
+**AETHER: NEURAL DEFENSE. COGNITIVE SUPERIORITY.**

@@ -1,5 +1,5 @@
 {
-  "name": "Falcon Intelligence Core (FIC)",
-  "description": "State-of-the-art cognitive threat hunting and automated mitigation for CrowdStrike analysts.",
+  "name": "AETHER: COGNITIVE DEFENSE CORE",
+  "description": "Next-generation agentic security orchestration and autonomous forensic reasoning.",
   "requestFramePermissions": []
 }
