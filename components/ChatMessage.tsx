@@ -1,3 +1,4 @@
+
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Message, ToolCallDetails } from '../types';
@@ -22,13 +23,13 @@ const ToolStream: React.FC<{ tools: ToolCallDetails[], onLift?: (id: string) => 
             <div className="flex items-center justify-between gap-4 mb-2">
                <div className="flex items-center gap-3">
                   <div className={`w-2 h-2 rounded-full ${t.status === 'pending' ? 'bg-cs-red animate-ping' : isError ? 'bg-red-600' : 'bg-emerald-500'}`}></div>
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-black">Forensic Module Execution</span>
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-black">Executing Falcon Tool</span>
                </div>
                <span className="text-[10px] text-white font-bold bg-white/5 px-2 py-0.5 rounded border border-white/5 uppercase">{t.functionName}</span>
             </div>
             
             <div className="text-[9px] text-zinc-600 uppercase flex gap-2 overflow-hidden mb-3">
-               <span className="flex-shrink-0">Parameters:</span>
+               <span className="flex-shrink-0">Params:</span>
                <span className="truncate text-zinc-500">{JSON.stringify(t.args)}</span>
             </div>
 
@@ -36,7 +37,7 @@ const ToolStream: React.FC<{ tools: ToolCallDetails[], onLift?: (id: string) => 
                 <div className="mt-2 bg-zinc-950/80 p-4 border border-white/5 rounded-sm">
                    <div className="max-h-60 overflow-y-auto custom-scrollbar font-mono text-[10px] leading-relaxed text-zinc-300">
                       {isError ? (
-                        <div className="text-red-400 font-black uppercase">PROTOCOL_ERROR: {t.result.error}</div>
+                        <div className="text-red-400 font-black uppercase">ERROR: {t.result.error}</div>
                       ) : (
                         <pre className="whitespace-pre-wrap">{JSON.stringify(t.result, null, 2)}</pre>
                       )}
@@ -48,7 +49,7 @@ const ToolStream: React.FC<{ tools: ToolCallDetails[], onLift?: (id: string) => 
                           onClick={() => onLift(deviceId)}
                           className="w-full bg-emerald-500/10 hover:bg-emerald-500 hover:text-black border border-emerald-500/40 text-emerald-400 py-3 rounded-sm font-black uppercase tracking-[0.3em] text-[9px] transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.1)]"
                         >
-                          Lift Host Isolation
+                          Lift Isolation
                         </button>
                     </div>
                   )}
@@ -98,7 +99,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onLiftContain
         <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} flex-1 min-w-0`}>
           <div className="flex items-center gap-4 mb-2 text-[10px] font-mono tracking-widest uppercase opacity-60">
              <span className={`font-black ${isAlert ? 'text-cs-red' : 'text-white'}`}>
-               {isUser ? 'Tier_3_Analyst' : isAlert ? 'System_Trigger' : 'Strategic_Intelligence'}
+               {isUser ? 'ANALYST' : isAlert ? 'SYSTEM ALERT' : 'AETHER INTEL'}
              </span>
              <span className="text-zinc-600 font-bold">
                {message.timestamp.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -121,7 +122,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onLiftContain
                       <div className="w-2 h-2 bg-cs-red animate-pulse delay-75"></div>
                       <div className="w-2 h-2 bg-cs-red animate-pulse delay-150"></div>
                     </div>
-                    Executing Deep Forensic Analysis...
+                    Processing Forensic Data...
                  </div>
             ) : (
               <div className="markdown-content font-sans text-[13px] text-zinc-300 space-y-5 leading-relaxed">

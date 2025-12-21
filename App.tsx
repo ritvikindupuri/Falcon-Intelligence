@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { AgentController } from './services/agent';
 import { Message, AppConfig, SecurityStats, Incident, Device } from './types';
@@ -7,22 +8,22 @@ import { SettingsModal } from './components/SettingsModal';
 const INITIAL_MESSAGE: Message = {
   id: 'init-1',
   role: 'model',
-  content: `### AETHER COGNITIVE CORE ONLINE
-Neural synchronization complete. Investigative heuristics loaded.
+  content: `### AETHER SECURITY CORE READY
+CrowdStrike Falcon connection active. Automated monitoring is now online.
 
-Standing by for telemetry ingestion or tactical command input.`,
+Input a command or select a playbook to begin investigation.`,
   timestamp: new Date()
 };
 
 const PLAYBOOKS = [
-  { id: 'PB-ROOT', name: 'PROCESS_RECONSTRUCTION', cmd: 'Execute Root Cause Analysis: Analyze the process tree and behavioral detections for the most recent critical incident.', desc: 'Rebuild attack lineage from kernel events.' },
-  { id: 'PB-LAT', name: 'LATERAL_CORRELATION', cmd: 'Perform a Lateral Movement Sweep: Correlate active incidents to find shared user accounts and network hop-points.', desc: 'Identify movement across subnet boundaries.' },
-  { id: 'PB-EXFIL', name: 'VECTOR_AUDIT', cmd: 'Data Exfiltration Audit: Scan for outbound network spikes and unauthorized cloud storage connections.', desc: 'Detect evidence of data staging or exfiltration.' },
-  { id: 'PB-IDEN', name: 'IDENTITY_SURVEILLANCE', cmd: 'Verify Identity Integrity: Flag MFA bypasses, abnormal login hours, and local admin modifications.', desc: 'Audit for compromised credentials.' },
-  { id: 'PB-LIFT', name: 'LIFT_RESTRICTION', cmd: 'Lift Network Containment: Restore network access for a previously isolated host after forensic clearance.', desc: 'Reconnect verified assets.' },
-  { id: 'PB-RANS', name: 'RANSOMWARE_TRIAGE', cmd: 'Ransomware Audit: Check for Shadow Copy deletion and mass encryption/archiving signatures.', desc: 'Detect early-stage ransomware activity.' },
-  { id: 'PB-SCRIPT', name: 'HEURISTIC_SWEEP', cmd: 'Script Analysis: Audit all PowerShell, WMI, and BITS execution logs for suspicious obfuscation.', desc: 'Hunt for fileless attack techniques.' },
-  { id: 'PB-ZERO', name: 'TRUST_AUDIT', cmd: 'Conditional Access Review: Verify failed MFA attempts and abnormal login geography for high-value targets.', desc: 'Audit trust boundary failures.' },
+  { id: 'PB-ROOT', name: 'ROOT_CAUSE_ANALYSIS', cmd: 'Execute Root Cause Analysis: Analyze the process tree and behavioral detections for the most recent critical incident.', desc: 'Rebuild attack lineage from kernel events.' },
+  { id: 'PB-LAT', name: 'LATERAL_MOVEMENT_SWEEP', cmd: 'Perform a Lateral Movement Sweep: Correlate active incidents to find shared user accounts and network hop-points.', desc: 'Identify movement across subnet boundaries.' },
+  { id: 'PB-EXFIL', name: 'DATA_EXFIL_AUDIT', cmd: 'Data Exfiltration Audit: Scan for outbound network spikes and unauthorized cloud storage connections.', desc: 'Detect evidence of data staging or exfiltration.' },
+  { id: 'PB-IDEN', name: 'IDENTITY_AUDIT', cmd: 'Verify Identity Integrity: Flag MFA bypasses, abnormal login hours, and local admin modifications.', desc: 'Audit for compromised credentials.' },
+  { id: 'PB-LIFT', name: 'RESTORE_NETWORK', cmd: 'Lift Network Containment: Restore network access for a previously isolated host after forensic clearance.', desc: 'Reconnect verified assets.' },
+  { id: 'PB-RANS', name: 'RANSOMWARE_HUNT', cmd: 'Ransomware Audit: Check for Shadow Copy deletion and mass encryption/archiving signatures.', desc: 'Detect early-stage ransomware activity.' },
+  { id: 'PB-SCRIPT', name: 'MALICIOUS_SCRIPT_SWEEP', cmd: 'Script Analysis: Audit all PowerShell, WMI, and BITS execution logs for suspicious obfuscation.', desc: 'Hunt for fileless attack techniques.' },
+  { id: 'PB-ZERO', name: 'ACCESS_REVIEW', cmd: 'Conditional Access Review: Verify failed MFA attempts and abnormal login geography for high-value targets.', desc: 'Audit trust boundary failures.' },
 ];
 
 export const CommandLogo = ({ size = 24, className = "" }) => (
@@ -43,7 +44,7 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [monitoringEnabled, setMonitoringEnabled] = useState(false);
   const [stats, setStats] = useState<SecurityStats>({ openIncidents: 0, criticalCount: 0, containedHosts: 0, lastUpdated: new Date() });
-  const [riskScore, setRiskScore] = useState(0);
+  const [apiState, setApiState] = useState<'IDLE' | 'STABLE' | 'ERROR'>('IDLE');
 
   const [config, setConfig] = useState<AppConfig>({
     clientId: '',
@@ -58,6 +59,7 @@ export default function App() {
   useEffect(() => {
     if (process.env.API_KEY) {
       agentRef.current = new AgentController(process.env.API_KEY, config);
+      validateConnection();
     }
   }, [config]);
 
@@ -67,7 +69,7 @@ export default function App() {
 
   useEffect(() => {
       let interval: ReturnType<typeof setInterval> | undefined;
-      if (monitoringEnabled && agentRef.current) {
+      if (monitoringEnabled && agentRef.current && apiState === 'STABLE') {
           updateStats();
           interval = setInterval(() => {
               updateStats();
@@ -75,27 +77,39 @@ export default function App() {
           }, 15000); 
       }
       return () => { if (interval) clearInterval(interval); };
-  }, [monitoringEnabled, config]); 
+  }, [monitoringEnabled, config, apiState]); 
+
+  const validateConnection = async () => {
+    if (!config.clientId || !config.clientSecret) {
+      setApiState('IDLE');
+      return;
+    }
+    if (!agentRef.current) return;
+    try {
+      await agentRef.current.csService.testConnection();
+      setApiState('STABLE');
+    } catch (e) {
+      setApiState('ERROR');
+    }
+  };
 
   const updateStats = async () => {
-      if (!agentRef.current) return;
+      if (!agentRef.current || apiState !== 'STABLE') return;
       try {
           const s = await agentRef.current.csService.get_statistics();
           setStats(s);
-          const calculatedRisk = Math.min(100, (s.criticalCount * 20) + (s.openIncidents * 4));
-          setRiskScore(calculatedRisk);
       } catch (e) { console.error(e); }
   };
 
   const checkForNewCriticals = async () => {
-      if (!agentRef.current) return;
+      if (!agentRef.current || apiState !== 'STABLE') return;
       try {
           const incidents = await agentRef.current.csService.list_incidents({ severity: 'Critical', limit: 1 });
           if (Array.isArray(incidents) && incidents.length > 0) {
               const latest = incidents[0];
               if (lastCheckedIncidentRef.current !== latest.incident_id && latest.status !== 'Closed') {
                   lastCheckedIncidentRef.current = latest.incident_id;
-                  processUserMessage(`NEURAL ALERT: High-severity incident detected (${latest.incident_id}) on ${latest.host_name}. Initiating autonomous investigation.`, true);
+                  processUserMessage(`SYSTEM ALERT: New critical incident detected (${latest.incident_id}). Initiating autonomous triage.`, true);
               }
           }
       } catch (e) { }
@@ -134,7 +148,7 @@ export default function App() {
   };
 
   const handleLiftContainment = (deviceId: string) => {
-    processUserMessage(`AUTHORIZE: Lift restrictions for asset ID: ${deviceId}`);
+    processUserMessage(`ACTION: Restore network for host: ${deviceId}`);
   }
 
   return (
@@ -153,19 +167,20 @@ export default function App() {
                 </div>
                 <div>
                     <h1 className="text-2xl font-display font-black tracking-tighter leading-none text-white uppercase italic">AETHER</h1>
-                    <p className="text-[9px] text-cs-red font-black tracking-[0.4em] uppercase mt-1 pl-2 border-l-2 border-cs-red">Cognitive Response</p>
+                    <p className="text-[9px] text-cs-red font-black tracking-[0.4em] uppercase mt-1 pl-2 border-l-2 border-cs-red">Security AI</p>
                 </div>
              </div>
 
              <div className="bg-zinc-900/80 p-3 border border-white/10 rounded">
                 <div className="flex justify-between items-end mb-2">
-                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Neural Load Index</span>
-                    <span className={`text-base font-mono font-black ${riskScore > 60 ? 'text-cs-red animate-pulse' : 'text-emerald-400'}`}>{riskScore.toFixed(0)}%</span>
+                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">THREAT RISK LEVEL</span>
+                    <span className={`text-base font-mono font-black ${stats.criticalCount > 0 ? 'text-cs-red animate-pulse' : 'text-emerald-400'}`}>
+                      {stats.criticalCount > 0 ? 'ELEVATED' : 'STABLE'}
+                    </span>
                 </div>
                 <div className="h-1.5 w-full bg-black rounded-full overflow-hidden border border-white/5">
                     <div 
-                        className={`h-full transition-all duration-1000 ease-out ${riskScore > 70 ? 'bg-cs-red shadow-[0_0_15px_#ff2d2d]' : 'bg-emerald-500 shadow-[0_0_10px_#10b981]'}`}
-                        style={{ width: `${riskScore}%` }}
+                        className={`h-full transition-all duration-1000 ease-out ${stats.criticalCount > 0 ? 'bg-cs-red w-full' : 'bg-emerald-500 w-[10%]'}`}
                     ></div>
                 </div>
              </div>
@@ -175,7 +190,7 @@ export default function App() {
         <div className="px-6 py-4 grid grid-cols-3 gap-3">
             {[
               { label: 'CRITICAL', val: stats.criticalCount, color: 'text-cs-red' },
-              { label: 'ACTIVE', val: stats.openIncidents, color: 'text-white' },
+              { label: 'OPEN', val: stats.openIncidents, color: 'text-white' },
               { label: 'RESTRICTED', val: stats.containedHosts, color: 'text-emerald-400' }
             ].map(m => (
               <div key={m.label} className="bg-zinc-800/40 p-3 border border-white/5 rounded-sm backdrop-blur-md">
@@ -188,7 +203,7 @@ export default function App() {
         <div className="flex-1 flex flex-col min-h-0 pt-2">
           <div className="px-6 flex justify-between items-center mb-3">
             <h3 className="text-[9px] font-black text-white uppercase tracking-[0.3em] flex items-center gap-2">
-               <span className="w-2 h-4 bg-cs-red rounded-sm"></span> TACTICAL HEURISTICS
+               <span className="w-2 h-4 bg-cs-red rounded-sm"></span> DEFENSE ACTIONS
             </h3>
           </div>
           
@@ -198,9 +213,9 @@ export default function App() {
                     <button 
                       key={pb.id} 
                       onClick={() => processUserMessage(pb.cmd, true)}
-                      disabled={isProcessing}
+                      disabled={isProcessing || apiState !== 'STABLE'}
                       className={`text-left p-4 bg-zinc-900 border transition-all duration-300 rounded hover:bg-zinc-800 group ${
-                        isProcessing ? 'opacity-40 cursor-not-allowed' : 'border-white/5 hover:border-cs-red/40'
+                        (isProcessing || apiState !== 'STABLE') ? 'opacity-40 cursor-not-allowed' : 'border-white/5 hover:border-cs-red/40'
                       }`}
                     >
                         <div className="flex justify-between items-center mb-1">
@@ -216,18 +231,20 @@ export default function App() {
         <div className="p-6 border-t border-cs-border space-y-3 bg-black/40">
             <button 
                 onClick={() => setMonitoringEnabled(!monitoringEnabled)}
+                disabled={apiState !== 'STABLE'}
                 className={`w-full py-4 flex flex-col items-center justify-center gap-1 text-[9px] font-black tracking-widest uppercase transition-all duration-500 border rounded ${
+                    apiState !== 'STABLE' ? 'bg-zinc-900 border-zinc-800 text-zinc-700 cursor-not-allowed' :
                     monitoringEnabled ? 'bg-cs-red border-cs-red text-white shadow-[0_0_15px_rgba(255,45,45,0.2)]' : 'bg-zinc-900 border-zinc-700 text-zinc-500 hover:text-white hover:border-zinc-500'
                 }`}
             >
                 <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${monitoringEnabled ? 'bg-white animate-pulse' : 'bg-current'}`}></div>
-                    {monitoringEnabled ? 'NEURAL MONITORING: ACTIVE' : 'ENGAGE NEURAL CORE'}
+                    {monitoringEnabled ? 'AUTO-PILOT: ACTIVE' : 'ENABLE AUTO-PILOT'}
                 </div>
             </button>
             <div className="flex gap-2">
-                <button onClick={() => setIsSettingsOpen(true)} className="flex-1 text-center text-[9px] font-black text-zinc-400 hover:text-white border border-zinc-700 py-3 transition-all uppercase tracking-widest rounded bg-zinc-900/50">Core Config</button>
-                <button onClick={() => window.location.reload()} className="flex-1 text-center text-[9px] font-black text-zinc-400 hover:text-cs-red border border-zinc-700 py-3 transition-all uppercase tracking-widest rounded bg-zinc-900/50">Resync</button>
+                <button onClick={() => setIsSettingsOpen(true)} className="flex-1 text-center text-[9px] font-black text-zinc-400 hover:text-white border border-zinc-700 py-3 transition-all uppercase tracking-widest rounded bg-zinc-900/50">Settings</button>
+                <button onClick={() => window.location.reload()} className="flex-1 text-center text-[9px] font-black text-zinc-400 hover:text-cs-red border border-zinc-700 py-3 transition-all uppercase tracking-widest rounded bg-zinc-900/50">Reset</button>
             </div>
         </div>
       </aside>
@@ -237,15 +254,17 @@ export default function App() {
         
         <header className="px-8 py-4 border-b border-cs-border flex justify-between items-center bg-black/80 backdrop-blur-xl z-20">
             <div className="flex flex-col">
-                <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Neural Telemetry Pipeline</span>
+                <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">CONNECTION STATUS</span>
                 <span className="text-xs font-mono font-bold text-white tracking-widest uppercase flex items-center gap-2">
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                    CORE_UPLINK_STABLE
+                    <span className={`w-2 h-2 rounded-full ${apiState === 'STABLE' ? 'bg-emerald-500 animate-pulse' : apiState === 'ERROR' ? 'bg-cs-red' : 'bg-zinc-600'}`}></span>
+                    {apiState === 'STABLE' ? 'FALCON_UPLINK_STABLE' : apiState === 'ERROR' ? 'FALCON_UPLINK_FAIL' : 'FALCON_UPLINK_OFFLINE'}
                 </span>
             </div>
             <div className="text-right">
-                <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Heuristic Precision</span>
-                <div className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-tighter">99.9% Synchronized</div>
+                <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">API STATE</span>
+                <div className={`text-[10px] font-mono font-bold uppercase tracking-tighter ${apiState === 'STABLE' ? 'text-emerald-400' : apiState === 'ERROR' ? 'text-cs-red' : 'text-zinc-500'}`}>
+                    {apiState === 'STABLE' ? 'CONNECTED' : apiState === 'ERROR' ? 'AUTH_ERROR' : 'NOT CONFIGURED'}
+                </div>
             </div>
         </header>
 
@@ -261,22 +280,26 @@ export default function App() {
         <div className="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-black via-black/90 to-transparent z-40">
            <div className="max-w-4xl mx-auto">
               <form onSubmit={handleSendMessage} className="relative group">
-                  <div className="relative bg-zinc-900/90 border border-zinc-700 group-hover:border-cs-red/40 transition-all duration-300 flex items-center shadow-2xl rounded-lg overflow-hidden">
-                      <div className="pl-6 pr-4 text-cs-red font-mono font-black text-xl select-none animate-neural-pulse">◈</div>
+                  <div className={`relative bg-zinc-900/90 border transition-all duration-300 flex items-center shadow-2xl rounded-lg overflow-hidden ${apiState === 'STABLE' ? 'border-zinc-700 group-hover:border-cs-red/40' : 'border-zinc-800 opacity-80'}`}>
+                      <div className={`pl-6 pr-4 font-mono font-black text-xl select-none animate-core-pulse ${apiState === 'STABLE' ? 'text-cs-red' : 'text-zinc-600'}`}>◈</div>
                       <input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        disabled={isProcessing}
-                        placeholder={isProcessing ? "PROCESSING NEURAL HEURISTICS..." : "INPUT TACTICAL COMMAND (e.g. 'Ingest host telemetry' or 'Perform root cause analysis')"}
-                        className="w-full bg-transparent text-white py-6 px-1 focus:outline-none font-mono text-sm placeholder:text-zinc-600 font-bold tracking-wider"
+                        disabled={isProcessing || apiState !== 'STABLE'}
+                        placeholder={
+                            apiState !== 'STABLE' ? "PLEASE CONFIGURE API CREDENTIALS IN SETTINGS..." :
+                            isProcessing ? "ANALYZING TELEMETRY..." : 
+                            "COMMAND (e.g. 'Audit host' or 'Scan for lateral movement')"
+                        }
+                        className="w-full bg-transparent text-white py-6 px-1 focus:outline-none font-mono text-sm placeholder:text-zinc-600 font-bold tracking-wider disabled:cursor-not-allowed"
                         autoFocus
                       />
                       <div className="px-6">
                          <button 
                             type="submit" 
-                            disabled={!input.trim() || isProcessing} 
-                            className="text-zinc-500 hover:text-cs-red transition-all transform hover:scale-110"
+                            disabled={!input.trim() || isProcessing || apiState !== 'STABLE'} 
+                            className={`${apiState === 'STABLE' ? 'text-zinc-500 hover:text-cs-red' : 'text-zinc-800'} transition-all transform hover:scale-110`}
                           >
                              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                           </button>
@@ -284,11 +307,11 @@ export default function App() {
                   </div>
               </form>
               <div className="mt-4 flex justify-between items-center px-4">
-                  <div className="text-[9px] text-zinc-600 font-mono tracking-[0.4em] uppercase font-black italic">AETHER_CORE_SYST_4.0_NEXTGEN</div>
+                  <div className="text-[9px] text-zinc-600 font-mono tracking-[0.4em] uppercase font-black italic">AETHER_CORE_SYSTEM_READY</div>
                   <div className="flex gap-5">
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-zinc-700 font-black uppercase tracking-widest">Cognitive State</span>
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                        <span className="text-[9px] text-zinc-700 font-black uppercase tracking-widest">STATE</span>
+                        <div className={`w-2 h-2 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)] ${apiState === 'STABLE' ? 'bg-emerald-500' : 'bg-zinc-700'}`}></div>
                       </div>
                   </div>
               </div>

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 import { TOOLS, SYSTEM_INSTRUCTION } from "../constants";
 import { AppConfig, Message, ToolCallDetails } from "../types";
@@ -12,13 +13,13 @@ export class AgentController {
     this.genAI = new GoogleGenAI({ apiKey });
     this.csService = new CrowdStrikeService(config);
     
-    // Using gemini-3-pro-preview with Deep Thinking enabled for SOC Forensic Analysis
+    // Using gemini-3-pro-preview for deep cognitive reasoning on security telemetry
     this.chat = this.genAI.chats.create({
       model: 'gemini-3-pro-preview',
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         tools: [{ functionDeclarations: TOOLS }],
-        // Enabling Thinking Budget for maximum reasoning depth on security telemetry
+        // Enabling Thinking Budget for maximum reasoning depth
         thinkingConfig: { thinkingBudget: 32768 } 
       }
     });
@@ -41,7 +42,7 @@ export class AgentController {
         
         const tempId = crypto.randomUUID();
         
-        // Update UI to show thinking/tool-use state
+        // Update UI to show logic/tool-use state
         onUpdate({
             id: tempId,
             role: 'model',
@@ -75,7 +76,7 @@ export class AgentController {
                             result = await this.csService.get_detections(call.args as any);
                             break;
                         default:
-                            result = { error: 'Unknown forensic tool' };
+                            result = { error: 'Unknown tactical tool' };
                     }
                 } catch (e: any) {
                     result = { error: e.message };
@@ -122,7 +123,7 @@ export class AgentController {
       onUpdate({
         id: crypto.randomUUID(),
         role: 'system',
-        content: `LOGIC_FAIL: ${error.message || 'FIC_CORE_UNSTABLE'}`,
+        content: `LOGIC_FAIL: ${error.message || 'CORE_STABILITY_ERROR'}`,
         timestamp: new Date(),
         isThinking: false
       });

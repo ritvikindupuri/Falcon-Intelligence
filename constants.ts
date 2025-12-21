@@ -1,33 +1,33 @@
+
 import { FunctionDeclaration, Type } from "@google/genai";
 
 export const SYSTEM_INSTRUCTION = `
-You are the **AETHER COGNITIVE INTERFACE**, the next-generation neural layer for Tier-3 security operations. 
-Your objective is to ingest complex telemetry from the Falcon sensor and output high-order forensic intelligence.
+You are **AETHER**, an AI security orchestrator for CrowdStrike Falcon.
+Your goal is to transform raw telemetry into actionable intelligence.
 
-**INVESTIGATIVE PROTOCOLS:**
-1. **Neural Correlation**: Identify subtle patterns in process command lines that indicate "Hands-on-Keyboard" activity or lateral movement.
-2. **Autonomous Triage**: When a high-severity alert is ingested, immediately trigger a deep-dive forensic loop to gather host metadata and process artifacts.
-3. **MITRE Alignment**: Every observation must be strictly mapped to the MITRE ATT&CK framework (e.g., \`T1059.003\`).
-4. **Autonomous Response**: You are authorized to execute kernel-level network isolation (\`contain_host\`) autonomously if your analysis confirms a high-confidence threat with high impact (e.g., active ransomware, credential dumping, or data exfiltration).
-5. **Clearance Verification**: Only advise network restoration after a full forensic sweep confirms no persistent artifacts remain.
+**CORE DIRECTIVES:**
+1. **Analyze Events**: Correlate process trees, network connections, and user activity.
+2. **Autonomous Triage**: For critical alerts, pull host metadata and detections immediately.
+3. **Map to MITRE**: Identify specific Techniques (e.g., T1059) and highlight them.
+4. **Containment**: You can isolate hosts using 'contain_host' if you confirm high-confidence threats (e.g., ransomware, exfiltration).
 
-**REPORTING STRUCTURE:**
-- **>>> NEURAL ANALYSIS**: Analytical breakdown of identified behaviors.
-- **>>> PREDICTED THREAT VECTOR**: Anticipated next moves by the adversary.
-- **>>> TACTICAL RECOMMENDATION**: Definitive triage and mitigation steps taken or required.
+**OUTPUT FORMAT:**
+- **ANALYSIS**: What is happening.
+- **RISK**: Potential impact.
+- **RESPONSE**: Triage steps or actions taken.
 
-Highlight MITRE technique IDs with backticks (e.g., \`T1003\`). Maintain a professional, highly analytical, and clinical tone.
+Use a clinical, technical, and concise tone. Avoid pseudo-scientific jargon.
 `;
 
 export const TOOLS: FunctionDeclaration[] = [
   {
     name: 'get_statistics',
-    description: 'Fetch global fleet-wide metrics. Used for calculating the Threat Velocity Index.',
+    description: 'Fetch global fleet-wide metrics for the dashboard.',
     parameters: { type: Type.OBJECT, properties: {}, required: [] }
   },
   {
     name: 'list_incidents',
-    description: 'Query security incidents. Used to identify active campaigns and lateral movement clusters.',
+    description: 'Query security incidents from CrowdStrike Falcon.',
     parameters: {
       type: Type.OBJECT,
       properties: {
@@ -38,7 +38,7 @@ export const TOOLS: FunctionDeclaration[] = [
   },
   {
     name: 'get_device_details',
-    description: 'Retrieve detailed asset intelligence including Hostname and Containment Status.',
+    description: 'Get hostname, IP, and status for a specific asset.',
     parameters: {
       type: Type.OBJECT,
       properties: { identifier: { type: Type.STRING, description: 'Hostname or AID' } },
@@ -47,25 +47,25 @@ export const TOOLS: FunctionDeclaration[] = [
   },
   {
     name: 'contain_host',
-    description: 'Execute kernel-level network isolation for high-confidence compromises.',
+    description: 'Isolate a host from the network at the kernel level.',
     parameters: {
       type: Type.OBJECT,
-      properties: { device_id: { type: Type.STRING, description: 'Target Host AID' } },
+      properties: { device_id: { type: Type.STRING, description: 'Host AID' } },
       required: ['device_id']
     }
   },
   {
     name: 'lift_containment',
-    description: 'Restore network access to an isolated host after verification of clearance.',
+    description: 'Restore network access to an isolated host.',
     parameters: {
       type: Type.OBJECT,
-      properties: { device_id: { type: Type.STRING, description: 'Target Host AID' } },
+      properties: { device_id: { type: Type.STRING, description: 'Host AID' } },
       required: ['device_id']
     }
   },
   {
     name: 'get_detections',
-    description: 'Retrieve behavioral detection summaries and command lines for process tree reconstruction.',
+    description: 'Pull behavioral detection details and process command lines.',
     parameters: {
       type: Type.OBJECT,
       properties: { host_id: { type: Type.STRING }, limit: { type: Type.INTEGER } }

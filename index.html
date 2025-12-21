@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -32,7 +33,7 @@
               'pulse-fast': 'pulse 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
               'scanline': 'scanline 10s linear infinite',
               'float': 'float 3s ease-in-out infinite',
-              'neural-pulse': 'neural 2s ease-in-out infinite',
+              'core-pulse': 'core-anim 2s ease-in-out infinite',
             },
             keyframes: {
               scanline: {
@@ -43,7 +44,7 @@
                 '0%, 100%': { transform: 'translateY(0)' },
                 '50%': { transform: 'translateY(-10px)' },
               },
-              neural: {
+              'core-anim': {
                 '0%, 100%': { opacity: 0.3, transform: 'scale(1)' },
                 '50%': { opacity: 1, transform: 'scale(1.1)' }
               }
