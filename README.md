@@ -1,4 +1,4 @@
-# AETHER | COGNITIVE DEFENSE CORE
+# AETHER - CrowdStrike Falcon Security Automation
 
 ![AETHER Dashboard](https://i.imgur.com/eCB4j5L.png)
 
