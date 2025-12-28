@@ -42,7 +42,7 @@ graph TD
 ```
 <p align="center"><b>Figure 1: System Architecture Overview</b></p>
 
-**Description**: The analyst interacts with the **Interface Layer**, which passes intent to the **Reasoning Layer**. Here, the Agentic Controller manages a multi-step thinking loop, querying the **Integration Layer** for specific telemetry data before synthesizing a final, expert-level report for the user.
+ The analyst interacts with the **Interface Layer**, which passes intent to the **Reasoning Layer**. Here, the Agentic Controller manages a multi-step thinking loop, querying the **Integration Layer** for specific telemetry data before synthesizing a final, expert-level report for the user.
 
 ---
 
