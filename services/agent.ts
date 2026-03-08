@@ -1,132 +1,153 @@
 
-import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
-import { TOOLS, SYSTEM_INSTRUCTION } from "../constants";
-import { AppConfig, Message, ToolCallDetails } from "../types";
-import { CrowdStrikeService } from "./crowdstrikeService";
+import { GoogleGenAI, Chat, FunctionDeclaration, Type, GenerateContentResponse } from "@google/genai";
+import { SYSTEM_INSTRUCTION } from "../constants";
+import { Message, ToolCallDetails, MCPServer, MCPTool } from "../types";
+
+const SENSITIVE_TOOLS = ['contain_host'];
 
 export class AgentController {
   private genAI: GoogleGenAI;
-  private chat: Chat;
-  public csService: CrowdStrikeService;
+  private chat: Chat | null = null;
+  private servers: MCPServer[] = [];
+  private initialized: Promise<void>;
+  private lastResponse: any = null;
 
-  constructor(apiKey: string, config: AppConfig) {
+  constructor(apiKey: string, servers: MCPServer[]) {
     this.genAI = new GoogleGenAI({ apiKey });
-    this.csService = new CrowdStrikeService(config);
-    
-    // Using gemini-3-pro-preview for deep cognitive reasoning on security telemetry
+    this.servers = servers;
+    this.initialized = this.init();
+  }
+
+  private async init() {
+    let allFunctionDeclarations: FunctionDeclaration[] = [];
+
+    for (const server of this.servers) {
+      const tools: MCPTool[] = await server.listTools();
+      const declarations = tools.map(t => ({
+        name: t.name,
+        description: `[${server.name}] ${t.description}`,
+        parameters: this.convertSchemaToGemini(t.inputSchema)
+      }));
+      allFunctionDeclarations = [...allFunctionDeclarations, ...declarations];
+    }
+
     this.chat = this.genAI.chats.create({
       model: 'gemini-3-pro-preview',
       config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        tools: [{ functionDeclarations: TOOLS }],
-        // Enabling Thinking Budget for maximum reasoning depth
+        systemInstruction: `${SYSTEM_INSTRUCTION}\n\nYou are an MCP-native agent. Tools are provided by the following servers: ${this.servers.map(s => s.name).join(', ')}.`,
+        tools: [{ functionDeclarations: allFunctionDeclarations }],
         thinkingConfig: { thinkingBudget: 32768 } 
       }
     });
   }
 
-  async processMessage(userMessage: string, onUpdate: (msg: Message) => void): Promise<void> {
+  private convertSchemaToGemini(schema: any): any {
+    return {
+      type: Type.OBJECT,
+      properties: Object.keys(schema.properties || {}).reduce((acc: any, key) => {
+        const prop = schema.properties[key];
+        acc[key] = {
+          type: prop.type?.toUpperCase() === 'INTEGER' ? Type.INTEGER : 
+                prop.type?.toUpperCase() === 'NUMBER' ? Type.NUMBER : 
+                prop.type?.toUpperCase() === 'BOOLEAN' ? Type.BOOLEAN : 
+                prop.type?.toUpperCase() === 'ARRAY' ? Type.ARRAY : Type.STRING,
+          description: prop.description,
+          ...(prop.enum ? { enum: prop.enum } : {})
+        };
+        return acc;
+      }, {}),
+      required: schema.required || []
+    };
+  }
+
+  async processMessage(userMessage: string | any[], onUpdate: (msg: Message) => void): Promise<void> {
+    await this.initialized;
+    if (!this.chat) throw new Error("Agent disconnected");
+
     try {
-      // Send user message and await response
-      let response = await this.chat.sendMessage({ message: userMessage });
+      let response: GenerateContentResponse = await this.chat.sendMessage({ message: userMessage });
+      await this.handleResponse(response, onUpdate);
+    } catch (error: any) {
+      onUpdate({ id: crypto.randomUUID(), role: 'system', content: `CRITICAL_EXCEPTION: ${error.message}`, timestamp: new Date() });
+    }
+  }
+
+  private async handleResponse(response: GenerateContentResponse, onUpdate: (msg: Message) => void): Promise<void> {
+    this.lastResponse = response;
+
+    if (response.functionCalls?.length) {
+      const functionCalls = response.functionCalls;
+      const toolDetails: ToolCallDetails[] = functionCalls.map(fc => ({
+        id: fc.id,
+        functionName: fc.name,
+        args: fc.args as Record<string, any>,
+        status: SENSITIVE_TOOLS.includes(fc.name) ? 'awaiting_approval' : 'pending'
+      }));
       
-      // Handle tool calls recursively if the model requests them
-      while (response.functionCalls && response.functionCalls.length > 0) {
-        const functionCalls = response.functionCalls;
-        
-        const toolDetails: ToolCallDetails[] = functionCalls.map(fc => ({
-          functionName: fc.name,
-          args: fc.args as Record<string, any>,
-          status: 'pending'
-        }));
-        
-        const tempId = crypto.randomUUID();
-        
-        // Update UI to show logic/tool-use state
-        onUpdate({
-            id: tempId,
-            role: 'model',
-            content: '', 
-            timestamp: new Date(),
-            isThinking: true,
-            toolCalls: toolDetails
-        });
+      const turnId = crypto.randomUUID();
+      onUpdate({ id: turnId, role: 'model', content: '', timestamp: new Date(), isThinking: true, toolCalls: toolDetails });
 
-        const toolParts = await Promise.all(
-            functionCalls.map(async (call, index) => {
-                let result;
-                try {
-                    switch (call.name) {
-                        case 'get_statistics':
-                            result = await this.csService.get_statistics();
-                            break;
-                        case 'list_incidents':
-                            result = await this.csService.list_incidents(call.args as any);
-                            break;
-                        case 'get_device_details':
-                            result = await this.csService.get_device_details(call.args as any);
-                            break;
-                        case 'contain_host':
-                            result = await this.csService.contain_host(call.args as any);
-                            break;
-                        case 'lift_containment':
-                            result = await this.csService.lift_containment(call.args as any);
-                            break;
-                        case 'get_detections':
-                            result = await this.csService.get_detections(call.args as any);
-                            break;
-                        default:
-                            result = { error: 'Unknown tactical tool' };
-                    }
-                } catch (e: any) {
-                    result = { error: e.message };
-                }
-                
-                toolDetails[index].result = result;
-                toolDetails[index].status = result.error ? 'error' : 'success';
-
-                return {
-                    functionResponse: {
-                        name: call.name,
-                        response: { result: result },
-                        id: call.id
-                    }
-                };
-            })
-        );
-        
-        // Update UI with tool results
-        onUpdate({
-            id: tempId,
-            role: 'model',
-            content: '', 
-            timestamp: new Date(),
-            isThinking: true,
-            toolCalls: toolDetails
-        });
-
-        // Feed results back to the model for final synthesis
-        response = await this.chat.sendMessage({ message: toolParts });
+      // If any tool requires approval, we stop here and wait for UI to call resumeWithApproval
+      if (toolDetails.some(t => t.status === 'awaiting_approval')) {
+        return;
       }
 
-      // Final model response
+      await this.executeTools(toolDetails, turnId, onUpdate);
+    } else {
       onUpdate({
         id: crypto.randomUUID(),
         role: 'model',
-        content: response.text || "Diagnostic output generated.",
-        timestamp: new Date(),
-        isThinking: false
-      });
-
-    } catch (error: any) {
-      console.error("Agent Logic Failure:", error);
-      onUpdate({
-        id: crypto.randomUUID(),
-        role: 'system',
-        content: `LOGIC_FAIL: ${error.message || 'CORE_STABILITY_ERROR'}`,
+        content: response.text || "Investigation complete.",
         timestamp: new Date(),
         isThinking: false
       });
     }
+  }
+
+  async resumeWithApproval(turnId: string, approved: boolean, onUpdate: (msg: Message) => void): Promise<void> {
+    if (!this.lastResponse || !this.lastResponse.functionCalls) return;
+
+    const functionCalls = this.lastResponse.functionCalls;
+    const toolDetails: ToolCallDetails[] = functionCalls.map((fc: any) => ({
+      id: fc.id,
+      functionName: fc.name,
+      args: fc.args as Record<string, any>,
+      status: approved ? 'pending' : 'denied'
+    }));
+
+    if (!approved) {
+      const toolResponses = functionCalls.map((call: any) => ({
+        functionResponse: { name: call.name, response: { result: "Action denied by user." }, id: call.id }
+      }));
+      const nextResponse = await this.chat!.sendMessage({ message: toolResponses });
+      await this.handleResponse(nextResponse, onUpdate);
+      return;
+    }
+
+    await this.executeTools(toolDetails, turnId, onUpdate);
+  }
+
+  private async executeTools(toolDetails: ToolCallDetails[], turnId: string, onUpdate: (msg: Message) => void) {
+    const toolParts = await Promise.all(
+      toolDetails.map(async (detail, index) => {
+        const server = this.servers.find(s => s.callTool); 
+        const mcpResponse = await server!.callTool(detail.functionName, detail.args);
+        
+        let parsedResult;
+        try { parsedResult = JSON.parse(mcpResponse.content[0].text); } catch { parsedResult = mcpResponse.content[0].text; }
+
+        toolDetails[index].result = parsedResult;
+        toolDetails[index].status = mcpResponse.isError ? 'error' : 'success';
+        toolDetails[index].serverName = server?.name;
+
+        return {
+          functionResponse: { name: detail.functionName, response: { result: parsedResult }, id: detail.id }
+        };
+      })
+    );
+    
+    onUpdate({ id: turnId, role: 'model', content: '', timestamp: new Date(), isThinking: true, toolCalls: toolDetails });
+    const response = await this.chat!.sendMessage({ message: toolParts });
+    await this.handleResponse(response, onUpdate);
   }
 }

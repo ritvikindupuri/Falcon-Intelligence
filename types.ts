@@ -1,4 +1,27 @@
+
 import { FunctionDeclaration, Schema, Type } from "@google/genai";
+
+// --- MCP Types ---
+
+export interface MCPTool {
+  name: string;
+  description: string;
+  inputSchema: any; // JSON Schema
+}
+
+export interface MCPResponse {
+  content: Array<{
+    type: 'text';
+    text: string;
+  }>;
+  isError?: boolean;
+}
+
+export interface MCPServer {
+  name: string;
+  listTools(): Promise<MCPTool[]>;
+  callTool(name: string, args: any): Promise<MCPResponse>;
+}
 
 // --- Chat Types ---
 
@@ -9,47 +32,19 @@ export interface Message {
   timestamp: Date;
   isThinking?: boolean;
   toolCalls?: ToolCallDetails[];
-  isAlert?: boolean; // New: visual distinction for automated alerts
+  isAlert?: boolean; 
 }
 
 export interface ToolCallDetails {
+  id?: string; // Original Gemini call ID
   functionName: string;
   args: Record<string, any>;
   result?: any;
-  status?: 'pending' | 'success' | 'error';
+  status?: 'pending' | 'success' | 'error' | 'awaiting_approval' | 'denied';
+  serverName?: string;
 }
 
 // --- CrowdStrike Domain Types ---
-
-export interface Incident {
-  incident_id: string;
-  title: string;
-  description: string;
-  severity: 'Critical' | 'High' | 'Medium' | 'Low';
-  status: 'New' | 'In Progress' | 'Closed';
-  created_timestamp: string;
-  host_id: string;
-  host_name: string;
-}
-
-export interface Device {
-  device_id: string;
-  hostname: string;
-  platform_name: string;
-  os_version: string;
-  status: 'normal' | 'contained' | 'compromised';
-  last_seen: string;
-  external_ip: string;
-}
-
-export interface Detection {
-  detection_id: string;
-  tactic: string;
-  technique: string;
-  severity: string;
-  timestamp: string;
-  cmd_line: string;
-}
 
 export interface SecurityStats {
   openIncidents: number;
@@ -64,4 +59,5 @@ export interface AppConfig {
   clientId: string;
   clientSecret: string;
   baseUrl: string;
+  proxyUrl?: string;
 }
