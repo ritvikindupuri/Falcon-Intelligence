@@ -1,9 +1,22 @@
-# AETHER | COGNITIVE DEFENSE CORE
+# AETHER - Autonomous Security Orchestrator
 
-![AETHER Dashboard](https://i.imgur.com/eCB4j5L.png)
-
-### Description
 AETHER is a high-fidelity agentic security platform that synthesizes the reasoning of **Gemini 3 Pro** with the live telemetry of the **CrowdStrike Falcon API**. Built on the **Model Context Protocol (MCP)**, it acts as an autonomous security orchestrator, empowering analysts to execute deep forensic audits, trace attack lineages, and enforce network-level containment through an intuitive, technical interface.
+
+### Key Features
+* **Deep Forensic Audits**: Execute comprehensive analyses of incidents and alerts.
+* **Attack Lineage Tracing**: Track and visualize the progression of potential threats.
+* **Network-Level Containment**: Enforce immediate containment actions at the kernel level.
+* **Live Telemetry Synthesis**: Combines CrowdStrike Falcon API data with Gemini 3 Pro reasoning.
+* **MCP-Native Orchestration**: Seamless integration of high-stakes reasoning with raw data ingestion.
+
+---
+
+### Tech Stack
+*   **Frontend**: React 19, Tailwind CSS
+*   **Cognitive Engine**: Google Gemini 3 Pro (via `@google/genai`)
+*   **Orchestration**: Model Context Protocol (MCP)
+*   **Security Integration**: CrowdStrike Falcon REST API (OAuth2)
+*   **Documentation**: Markdown, Mermaid.js, JetBrains Mono
 
 ---
 
@@ -50,16 +63,7 @@ The AETHER ecosystem operates through a standardized cognitive loop:
 
 ---
 
-### Tech Stack
-*   **Frontend**: React 19, Tailwind CSS
-*   **Cognitive Engine**: Google Gemini 3 Pro (via `@google/genai`)
-*   **Orchestration**: Model Context Protocol (MCP)
-*   **Security Integration**: CrowdStrike Falcon REST API (OAuth2)
-*   **Documentation**: Markdown, Mermaid.js, JetBrains Mono
-
----
-
-### Detailed Setup Steps
+### Setup Instructions
 
 #### 1. Application Installation & Execution
 To get AETHER running on your local environment, follow these precise steps:
